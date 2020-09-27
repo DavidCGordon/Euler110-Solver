@@ -1,4 +1,5 @@
 import java.math.BigInteger;
+import java.util.Arrays;
 
 /**
  * @author David Gordon
@@ -8,6 +9,7 @@ public class UFO2 {
     private final int[] primes;
     private final int[] powers;
     private final double numSol;
+    private double actualSol;
     private BigInteger curMin = BigInteger.ONE;
     private final int first;
     private int last;
@@ -17,16 +19,17 @@ public class UFO2 {
      * Constructor for UnitFractionOperator (UFO)
      * @param s a double, containing the desired number of solutions
      */
-    public UnitFractionOperator2(double s) {
+    public UFO2(double s) {
         numSol = s;
 
-        final double log3 = Math.log(2 * s + 1) / Math.log(3);
-        final int num = (int) Math.ceil(log3);
+        final double log3 = Math.log(2 * s - 1) / Math.log(3);
+        final int numPrimes = (int) Math.ceil(log3);
 
-        primes = PrimeGenerator.generate(num);
-        powers = new int[num];
-        first = (int) (num - (Math.pow(num, .5))) - 1;
-        last = num - 2;
+        primes = PrimeGenerator.generate(numPrimes);
+        powers = new int[numPrimes];
+        first = (int) (numPrimes - (Math.pow(numPrimes, .5)));
+        last = numPrimes - 2;
+        actualSol = (Math.pow(3, primes.length) + 1) / 2;
 
         for (int i = 0; i < primes.length - 1; i++) {
             powers[i] = 1;
@@ -70,8 +73,8 @@ public class UFO2 {
         for (int i = 0; i < primes.length; i++) {
             sol *= (int) (2 * powers[i] + 1);
         }
-        return (sol / 2);
-    }
+        return ((sol + 1) / 2);
+    } 
 
     /**
      * "Rolls over" the UFO, (sets everything equal up to a point) , increasing how
@@ -126,36 +129,45 @@ public class UFO2 {
                 return i;
             }
         }
-        return -1;
+        return primes.length;
     }
 
     public void solve() {
         while (last >= first) {
             increment();
-            if (getSol() > numSol && curMin.compareTo(getNum()) > 0) {
+            if (getSol() >= numSol && curMin.compareTo(getNum()) > 0) {
                 curMin = getNum();
+                actualSol = getSol();
             }
         }
     }
+
     public static void main(final String[] args) {
-        final long start = System.nanoTime();
+        if (Double.parseDouble(args[0]) >= 10){
+            final long start = System.nanoTime();
 
-        final UFO2 UF = new UnitFractionOperator2((Double.parseDouble(args[0])));
-        UF.solve();
-        System.out.println(UF.curMin);
+            final UFO2 UF = new UFO2((Double.parseDouble(args[0])));
+            UF.solve();
+            System.out.println(UF.curMin);
 
-        final long end = System.nanoTime();
-        final long elapsed = end - start;
-        final int used = UF.getUsed();
-        final int front = used - UF.first;
-        final int back = UF.primes.length - used;
+            final long end = System.nanoTime();
+            final long elapsed = end - start;
+            final int used = UF.getUsed();
+            final int front = used - UF.first;
+            final int back = UF.primes.length - used;
 
-        System.out.println("Elapsed time in Nanoseconds: " + elapsed);
-        System.out.println("Elapsed time in Milliseconds: " + (double) elapsed/1000000);
-        System.out.println("number of solutions checked: " + UF.numChecked);
-        System.out.println("Primorial limit: " + UF.primes.length);
-        System.out.println("Primes used: " + used);
-        System.out.println("Space on front: " + front);
-        System.out.println("Space on back: " + back);
+            System.out.println("Elapsed time in Nanoseconds: " + elapsed);
+            System.out.println("Elapsed time in Milliseconds: " + (double) elapsed/1000000);
+            System.out.println("Number of candidates checked: " + UF.numChecked);
+            System.out.println("Actual number of solutions: " + ((int)UF.actualSol));
+            System.out.println("Primorial limit: " + UF.primes.length);
+            System.out.println("Primes used: " + used);
+            System.out.println("Predicted primes used:" + ((int)(2 * UF.primes.length - Math.pow(UF.primes.length, .5)-1)) / 2);
+            System.out.println("First: " + UF.first);
+            System.out.println("Space on front: " + front);
+            System.out.println("Space on back: " + back);
+        } else {
+            System.out.println("Does not work for args under 10");
+        }
     }
 }

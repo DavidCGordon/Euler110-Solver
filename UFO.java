@@ -1,4 +1,5 @@
 import java.math.BigInteger;
+import java.util.Arrays;
 
 /**
  * @author David Gordon
@@ -8,10 +9,11 @@ public class UFO {
     private final int[] primes;
     private final int[] powers;
     private final double numSol;
+    private double actualSol;
     private int numChecked = 0;
     private BigInteger curMin;
-    private int num;
-    private int primeIdx;
+    private int numPrimes;
+    public int primeIdx;
     
 
     /**
@@ -21,17 +23,17 @@ public class UFO {
     public UFO(double s) {
         numSol = s;
 
-        final double log3 = Math.log(2 * s + 1) / Math.log(3);
-        num = (int) Math.ceil(log3);
+        final double log3 = Math.log(2 * s - 1) / Math.log(3);
+        numPrimes = (int) Math.ceil(log3);
 
-        int first = (int) (num - (Math.pow(num, .5)));
-        int last = num;
+        int first = (int) (numPrimes - (Math.pow(numPrimes, .5)));
+        int last = numPrimes;
         primeIdx = (first + last-1) / 2;
 
-        primes = PrimeGenerator.generate(num);
-        powers = new int[num];
+        primes = PrimeGenerator.generate(numPrimes);
+        powers = new int[numPrimes];
 
-        for (int i = 0; i < primeIdx; i++) {
+        for (int i = 0; i < primeIdx-1; i++) {
             powers[i] = 1;
         }
         curMin = BigInteger.ONE;
@@ -93,6 +95,7 @@ public class UFO {
         }
     }
 
+    
     /**
      * This increments the UFO through good potential candidates only. it starts
      * with an almost full list of ones, then it will increment, rolling over until the next digit after prime idx fills
@@ -110,8 +113,10 @@ public class UFO {
         if (primeIdx != primes.length){
             while (powers[primeIdx+1] == 0) {
                 increment();
-                if (getSol() > numSol && curMin.compareTo(getNum()) > 0) {
+                if (getSol() >= numSol && curMin.compareTo(getNum()) > 0) {
                     curMin = getNum();
+                    actualSol = getSol();
+                    //System.out.println(Arrays.toString(powers));
                 }
             }
         }
@@ -125,13 +130,12 @@ public class UFO {
                 return i;
             }
         }
-        return -1;
+        return primes.length;
     }
-
     public static void main(final String[] args) {
         final long start = System.nanoTime();
 
-        final UFO UF = new UnitFractionOperator((Double.parseDouble(args[0])));
+        final UFO UF = new UFO((Double.parseDouble(args[0])));
         UF.solve();
         System.out.println(UF.curMin);
 
@@ -140,9 +144,10 @@ public class UFO {
 
         System.out.println("Elapsed time in Nanoseconds: " + elapsed);
         System.out.println("Elapsed time in Milliseconds: " + (double) elapsed/1000000);
-        System.out.println("Primorial limit: " + UF.num);
+        System.out.println("Number of Candidates checked: " + UF.numChecked);
+        System.out.println("Actual number of solutions: " + UF.actualSol);
+        System.out.println("Primorial limit: " + UF.numPrimes);
         System.out.println("Primes used: " + UF.getUsed());
         System.out.println("PrimeIdx: " + UF.primeIdx);
-        System.out.println("number of solutions checked: " + UF.numChecked);
     }
 }
